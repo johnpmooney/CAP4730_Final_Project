@@ -27,6 +27,9 @@ class Object {
 		return Vector (0,0,0);
 	}
 	
+	virtual Color getTexMapColor(Vector intersectionPosition) {
+		return Color(0.0,0.0,0.0,0.0);
+	}
 	
 	
 };

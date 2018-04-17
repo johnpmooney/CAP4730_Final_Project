@@ -178,7 +178,13 @@ double fresnel(Vector Ri, Vector normal, double ior) {
 Color getColorAt(Ray camera, Vector intersectionPosition, Vector intersectionRayDirection, std::vector<Object*> sceneObjects, int closestObject, std::vector<Source*> lightSources, double adjust, double ambientlight) {
 	
 	Color closestObjectColor = sceneObjects.at(closestObject)->getColor();
+	
+	if( closestObjectColor.getColorSpecial() == 4){
+        closestObjectColor = sceneObjects.at(closestObject)->getTexMapColor(intersectionPosition);
+    }
+    
 	Vector closestObjectNormal = sceneObjects.at(closestObject)->getNormal(intersectionPosition);
+	
 	
 	//tile black and white
 	if(closestObjectColor.getColorSpecial() == 5){
@@ -301,6 +307,7 @@ Color getColorAt(Ray camera, Vector intersectionPosition, Vector intersectionRay
 		
 		double ior = closestObjectColor.getColorSpecial() - 1;
 		double fres = fresnel(camera.getRayDirection(),closestObjectNormal, ior);
+		
 		
 		if(fres < 1){
 			Vector RiDirection = camera.getRayDirection();
@@ -499,7 +506,7 @@ int main(int argc, char *argv[]) {
 	int n = width * height;
 	RGB *pixels = new RGB[n];
 	
-	int AntiDepth = 4;
+	int AntiDepth = 1;
 	double AntiThreshold = 0.1;
 	
 	double aspectRatio = (double)width/(double)height;
@@ -557,6 +564,9 @@ int main(int argc, char *argv[]) {
 	Plane scenePlane (Y, -1, tile);
 	Plane scenePlane1 (Z, 1, green);
 	
+	//texture mapping
+	CImg<double> colorMap("moon_surface_texture.bmp");
+    Sphere colorMapSphere( s2, 1, colorMap );
 	
 	sceneObjects.push_back(dynamic_cast<Object*>(&sceneSphere));
 	sceneObjects.push_back(dynamic_cast<Object*>(&sceneSphere1));
@@ -691,7 +701,7 @@ int main(int argc, char *argv[]) {
 	CImg<unsigned char> image("spheres.bmp"), visu(500,400,1,3,0);
 	const unsigned char redColor[] = { 255,0,0 }, greenColor[] = { 0,255,0 }, blueColor[] = { 0,0,255 };
 	image.blur(0);
-	CImgDisplay main_disp(image,"Click a point");
+	CImgDisplay main_disp(image,"Project");
 	while (!main_disp.is_closed()) {
 		main_disp.wait();
 		
