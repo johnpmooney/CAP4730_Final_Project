@@ -178,6 +178,10 @@ double fresnel(Vector Ri, Vector normal, double ior) {
 Color getColorAt(Ray camera, Vector intersectionPosition, Vector intersectionRayDirection, std::vector<Object*> sceneObjects, int closestObject, std::vector<Source*> lightSources, double adjust, double ambientlight) {
 	
 	Color closestObjectColor = sceneObjects.at(closestObject)->getColor();
+	if( closestObjectColor.getColorSpecial() == 4){
+	    closestObjectColor = sceneObjects.at(closestObject)->getTexMapColor(intersectionPosition);
+	}
+	
 	Vector closestObjectNormal = sceneObjects.at(closestObject)->getNormal(intersectionPosition);
 	
 	//tile black and white
@@ -474,7 +478,7 @@ void box(Vector pt1,Vector pt2,double scale, Color color){//ptA and ptB are oppi
 	double pt2Z = pt2.getVectorZ();
 	
 	Vector A (pt2X,pt1Y,pt1Z);
-	Vector B (pt2X,pt1y,pt2Z);
+	Vector B (pt2X,pt1Y,pt2Z);
 	Vector C (pt1X,pt1Y,pt2Z);
 	
 	Vector D (pt2X,pt2Y,pt1Z);
@@ -488,12 +492,12 @@ void box(Vector pt1,Vector pt2,double scale, Color color){//ptA and ptB are oppi
 
 int main(int argc, char *argv[]) {
 
-	int width = 640;
-	int height = 480;
+	int width = 1280;
+	int height = 760;
 	int n = width * height;
 	RGB *pixels = new RGB[n];
 	
-	int AntiDepth = 4;
+	int AntiDepth = 25;
 	double AntiThreshold = 0.1;
 	
 	double aspectRatio = (double)width/(double)height;
@@ -550,16 +554,21 @@ int main(int argc, char *argv[]) {
 	Triangle sceneTriangle (A1, B1, C1, red);
 	Plane scenePlane (Y, -1, tile);
 	
+	CImg<double> colorMap("moon_surface_texture.bmp");
+	
+	Sphere colorMapSphere( Origin, 1, colorMap );
 	
 	//sceneObjects.push_back(dynamic_cast<Object*>(&sceneSphere));
 	//sceneObjects.push_back(dynamic_cast<Object*>(&sceneSphere1));
 	//sceneObjects.push_back(dynamic_cast<Object*>(&sceneTriangle));
-	sceneObjects.push_back(dynamic_cast<Object*>(&scenePlane));
+	//sceneObjects.push_back(dynamic_cast<Object*>(&scenePlane));
+	sceneObjects.push_back(dynamic_cast<Object*>(&colorMapSphere));
 	
-	Vector A2(-1,-1,0);
-	Vector B2(1,-1,0);
-	Vector C2(0,-1,-1);
-	tetrahedron(A2,B2,C2,1,red);
+	
+	//Vector A2(-1,-1,0);
+	//Vector B2(1,-1,0);
+	//Vector C2(0,-1,-1);
+	//tetrahedron(A2,B2,C2,1,red);
 	
 	double xAmount, yAmount;
 	int AntiIndex;

@@ -15,6 +15,10 @@ class Object {
 		return Color (0.0,0.0,0.0,0.0);
 	}
 	
+	virtual Color getTexMapColor(Vector intersectionPosition ){
+		return Color(0.0,0.0,0.0,0.0);
+	}
+	
 	virtual Vector getNormal(Vector position) {
 		return Vector (0,0,0);
 	}
