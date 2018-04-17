@@ -23,6 +23,10 @@ class Object {
 		return 0;
 	}
 	
+	virtual Vector getSphereCenter() {
+		return Vector (0,0,0);
+	}
+	
 	
 	
 };

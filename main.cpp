@@ -229,6 +229,7 @@ Color getColorAt(Ray camera, Vector intersectionPosition, Vector intersectionRay
 				Vector reflectionIntersectionPosition = intersectionPosition.vectorAddition(reflectionDirection.vectorScalar(reflectionIntersections.at(closestObjectReflecting_index)));
 				Vector reflectionIntersectionRayDirection = reflectionDirection;
 				
+				camera = reflectionRay;
 				//recursion
 				Color reflectionIntersectionColor = getColorAt(camera, reflectionIntersectionPosition, reflectionIntersectionRayDirection, sceneObjects, closestObjectReflecting_index, lightSources, adjust, ambientlight);   
 		
@@ -243,49 +244,54 @@ Color getColorAt(Ray camera, Vector intersectionPosition, Vector intersectionRay
 		Vector normal = closestObjectNormal;
 		double etai = 1;
 		double etat = closestObjectColor.getColorSpecial();
-		double n = 1/closestObjectColor.getColorSpecial();
+		double n = etai/etat;
 		double c1 = normal.dotProduct(RiDirection);
 		double cosi = clip(c1,-1,1);
 		if (cosi > 0) {
 			etai = closestObjectColor.getColorSpecial();
-			etai = 1;
+			etat = 1;
 			normal = normal.invert();
 		} else { 
 			cosi = -cosi; 
 		}
 		double eta = etai/etat;
 		double c2 = 1 - eta * eta *(1 - cosi * cosi);
-		if(c2 >= 0){
-			c2 = (double)sqrt(1 - n * n *(1 - cosi * cosi));
-			Vector scale1 = RiDirection.vectorScalar(n);
-			Vector scale2 = normal.vectorScalar(eta * cosi - c2);
-			Vector refractionDirection = scale1.vectorAddition(scale2);
-				
-			Ray refractionRay (intersectionPosition, refractionDirection);
+		
+		
+		if(c2  < 0){
+			c2 = 0;
+		}
+		
+		Vector scale1 = RiDirection.vectorScalar(eta); // n*Ri
+		Vector scale2 = normal.vectorScalar(eta * c1 - sqrt(c2)); //
+		Vector refractionDirection = scale1.vectorAddition(scale2);	
+		
+	
+		Ray refractionRay (intersectionPosition, refractionDirection);
 			
-			std::vector<double> refractionIntersections;
+		std::vector<double> refractionIntersections;
 			
-			for(int r_index = 0; r_index < sceneObjects.size(); r_index++) {
-				refractionIntersections.push_back(sceneObjects.at(r_index)->intersection(refractionRay));
-			}
+		for(int r_index = 0; r_index < sceneObjects.size(); r_index++) {
+			refractionIntersections.push_back(sceneObjects.at(r_index)->intersection(refractionRay));
+		}
 				
-			int closestObjectRefraction_index = closestObjectIndex(refractionIntersections);
+		int closestObjectRefraction_index = closestObjectIndex(refractionIntersections);
 				
-			if(closestObjectRefraction_index != -1 ) {
+		if(closestObjectRefraction_index != -1 ) {
 					
-				if(refractionIntersections.at(closestObjectRefraction_index) > adjust) {
-					//find pos and dir of refraction ray
-					Vector refractionIntersectionPosition = intersectionPosition.vectorAddition(refractionDirection.vectorScalar(refractionIntersections.at(closestObjectRefraction_index)));
-					Vector refractionIntersectionRayDirection = refractionDirection;
-						
-					//recursion
-					Color refractionIntersectionColor = getColorAt(camera, refractionIntersectionPosition, refractionIntersectionRayDirection, sceneObjects, closestObjectRefraction_index, lightSources, adjust, ambientlight);   
-					
-					finalColor = finalColor.colorAddition(refractionIntersectionColor.colorScalar(closestObjectColor.getColorSpecial()));
-				}
+			if(refractionIntersections.at(closestObjectRefraction_index) > adjust) {
+				//find pos and dir of refraction ray
+				Vector refractionIntersectionPosition = intersectionPosition.vectorAddition(refractionDirection.vectorScalar(refractionIntersections.at(closestObjectRefraction_index)));
+				Vector refractionIntersectionRayDirection = refractionDirection;
+				camera = refractionRay;	
+				//recursion
+				Color refractionIntersectionColor = getColorAt(camera, refractionIntersectionPosition, refractionIntersectionRayDirection, sceneObjects, closestObjectRefraction_index, lightSources, adjust, ambientlight);   
+				
+				finalColor = finalColor.colorAddition(refractionIntersectionColor.colorScalar(closestObjectColor.getColorSpecial()));
 			}
-		}	
-	}
+		}
+	}	
+	
 	
 	//fresnel
 	if(closestObjectColor.getColorSpecial() > 2 and closestObjectColor.getColorSpecial() <=3) {
@@ -474,7 +480,7 @@ void box(Vector pt1,Vector pt2,double scale, Color color){//ptA and ptB are oppi
 	double pt2Z = pt2.getVectorZ();
 	
 	Vector A (pt2X,pt1Y,pt1Z);
-	Vector B (pt2X,pt1y,pt2Z);
+	Vector B (pt2X,pt1Y,pt2Z);
 	Vector C (pt1X,pt1Y,pt2Z);
 	
 	Vector D (pt2X,pt2Y,pt1Z);
@@ -528,7 +534,7 @@ int main(int argc, char *argv[]) {
 	Color gray (0.5,0.5,0.5,0);
 	Color black (0,0,0,0);
 	Color tile (1.0,1.0,1.0,5);
-	Color clear (0.0,0.0,0.0, 1.3);
+	Color clear (0.0,0.0,0.0, 1.2);
 	Color fres (0.5,0.5,0.5,2.5);
 	
 	
@@ -542,24 +548,26 @@ int main(int argc, char *argv[]) {
 	//Objects in the Scene
 	Vector s1 (1.25,0,0);
 	Vector s2 (-1,0,0);
-	Vector A1 (1,3,-2);
+	Vector A1 (1,1,-2);
 	Vector B1 (3,-1,0);
 	Vector C1 (-3,-1,0);
 	Sphere sceneSphere (s1,1, clear);
 	Sphere sceneSphere1 (s2,1,blue);
-	Triangle sceneTriangle (A1, B1, C1, red);
+	Triangle sceneTriangle (A1, B1, C1, clear);
 	Plane scenePlane (Y, -1, tile);
+	Plane scenePlane1 (Z, 1, green);
 	
 	
-	//sceneObjects.push_back(dynamic_cast<Object*>(&sceneSphere));
-	//sceneObjects.push_back(dynamic_cast<Object*>(&sceneSphere1));
+	sceneObjects.push_back(dynamic_cast<Object*>(&sceneSphere));
+	sceneObjects.push_back(dynamic_cast<Object*>(&sceneSphere1));
 	//sceneObjects.push_back(dynamic_cast<Object*>(&sceneTriangle));
 	sceneObjects.push_back(dynamic_cast<Object*>(&scenePlane));
+//	sceneObjects.push_back(dynamic_cast<Object*>(&scenePlane1));
 	
 	Vector A2(-1,-1,0);
 	Vector B2(1,-1,0);
 	Vector C2(0,-1,-1);
-	tetrahedron(A2,B2,C2,1,red);
+	//tetrahedron(A2,B2,C2,1,red);
 	
 	double xAmount, yAmount;
 	int AntiIndex;

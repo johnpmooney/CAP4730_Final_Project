@@ -25,7 +25,7 @@ class Sphere : public Object {
 		color = c;
 	}
 	
-	Vector getSphereCenter(){
+	virtual Vector getSphereCenter(){
 			return center;
 	}
     double getSphereRadius(){
@@ -69,10 +69,20 @@ class Sphere : public Object {
 			double root1 = ((-1*b - sqrt(discriminant))/2);
 			double root2 = ((sqrt(discriminant)-b)/2);
 			if(root1 > 0) {// use root1
-				return root1;
+				Vector hit = ray.getRayOrigin().vectorAddition(ray.getRayDirection().vectorScalar(root1));
+				double diff = ray.getRayOrigin().vectorAddition(hit.invert()).magnitude();
+				if(diff < .001){
+						return -1;
+				}
+				else return root1;
 			}
 			else {
-				return root2;
+				Vector hit = ray.getRayOrigin().vectorAddition(ray.getRayDirection().vectorScalar(root2));
+				double diff = ray.getRayOrigin().vectorAddition(hit.invert()).magnitude();
+				if(diff < .001){
+						return -1;
+				}
+				else return root2;
 			}
 		}
 		else {//miss
