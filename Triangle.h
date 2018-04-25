@@ -5,6 +5,7 @@
 #include "Color.h"
 #include "math.h"
 #include "Object.h"
+
 #include "CImg.h"
 
 
@@ -133,7 +134,16 @@ class Triangle : public Object {
 		double distance = getTriangleDistance();
 		
 		double m = rayDirection.dotProduct(normal);
+		
+		double n = normal.dotProduct(ray.getRayOrigin().vectorAddition(normal.vectorScalar(distance).invert()));
+		double distanceToPlane = -1*n/m;
+		Vector hit = ray.getRayOrigin().vectorAddition(ray.getRayDirection().vectorScalar(distanceToPlane));
+		double diff = ray.getRayOrigin().vectorAddition(hit.invert()).magnitude();
+			
 		if(m == 0){//parallel to Triangle
+			return -1;
+		}
+		if (diff < 0.01){
 			return -1;
 		}
 		else {
@@ -144,31 +154,30 @@ class Triangle : public Object {
 			double intersectionY = rayDirection.vectorScalar(distanceToPlane).getVectorY() + ray_origin.getVectorY();
 			double intersectionZ = rayDirection.vectorScalar(distanceToPlane).getVectorZ() + ray_origin.getVectorZ();
 			Vector D(intersectionX, intersectionY, intersectionZ);
-			
+				
 			//CA
 			Vector CA ( C.getVectorX() - A.getVectorX(), C.getVectorY() - A.getVectorY(), C.getVectorZ() - A.getVectorZ());
 			Vector DA ( D.getVectorX() - A.getVectorX(), D.getVectorY() - A.getVectorY(), D.getVectorZ() - A.getVectorZ());
 			double check1 = (CA.crossProduct(DA)).dotProduct(normal);
+			
 			//BC
 			Vector BC ( B.getVectorX() - C.getVectorX(), B.getVectorY() - C.getVectorY(), B.getVectorZ() - C.getVectorZ());
 			Vector DC ( D.getVectorX() - C.getVectorX(), D.getVectorY() - C.getVectorY(), D.getVectorZ() - C.getVectorZ());
 			double check2 = (BC.crossProduct(DC)).dotProduct(normal);
-			
+				
 			//AB
 			Vector AB ( A.getVectorX() - B.getVectorX(), A.getVectorY() - B.getVectorY(), A.getVectorZ() - B.getVectorZ());
 			Vector DB ( D.getVectorX() - B.getVectorX(), D.getVectorY() - B.getVectorY(), D.getVectorZ() - B.getVectorZ());
 			double check3 = (AB.crossProduct(DB)).dotProduct(normal);
-			
-			if(check1 >= 0 && check2 >= 0 && check3 >=0){
+
+			if(check1 >= 0 && check2 >= 0 && check3 >= 0){
 				return distanceToPlane;
 			}
 			else{
 				return -1;
 			}
 		}
-			
 	}
-	
 };
 
 #endif
