@@ -5,11 +5,15 @@
 #include "Color.h"
 #include "math.h"
 #include "Object.h"
+#include "CImg.h"
+
 
 class Triangle : public Object {
 	Vector A, B, C;
+	Vector texCoorA, texCoorB, texCoorC;
 	double distance;
 	Color color;
+	cimg_library::CImg<double> texMap;
 	
 	public:
 	
@@ -25,6 +29,17 @@ class Triangle : public Object {
 		B = b;
 		C = c;
 		color = colorValue;
+	}
+	
+	Triangle(Vector a, Vector b, Vector c, cimg_library::CImg<double> textureImage, Vector A_texCoor, Vector B_texCoor, Vector C_texCoor ){
+	    A = a;
+		B = b;
+		C = c;
+		color = Color(0.0,0.0,0.0,4);
+        texMap = textureImage;
+		texCoorA = A_texCoor;
+		texCoorB = B_texCoor;
+		texCoorC = C_texCoor;
 	}
 
 	
@@ -43,10 +58,72 @@ class Triangle : public Object {
 		return color;
 	}
 	
+	virtual Color getTexMapColor( Vector intersectionPosition ){
+            Vector texCoordinates = getTexCoordinates(intersectionPosition);
+            Color texColor = getTexColor( texCoordinates );
+            return texColor;
+    }
+	
 	virtual Vector getNormal(Vector point) {
 		Vector normal = getTriangleNormal();
 		return normal;
 	}
+	
+	//Based on 3D position return 2D vector of texture coordinates
+    Vector getTexCoordinates(Vector intersectionPosition ){
+        //Interpolation based on barycentric coordinates
+		
+		//Get sub triangle areas
+		Vector normal = getTriangleNormal();
+		
+		//Area ABC
+		Vector BA ( B.getVectorX() - A.getVectorX(), B.getVectorY() - A.getVectorY(), B.getVectorZ() - A.getVectorZ());
+		Vector CA ( C.getVectorX() - A.getVectorX(), C.getVectorY() - A.getVectorY(), C.getVectorZ() - A.getVectorZ());
+		double areaABC = (BA.crossProduct(CA)).dotProduct(normal);
+		
+		//Area PBC
+		Vector BP ( B.getVectorX() - intersectionPosition.getVectorX(), B.getVectorY() - intersectionPosition.getVectorY(), B.getVectorZ() - intersectionPosition.getVectorZ());
+		Vector CP ( C.getVectorX() - intersectionPosition.getVectorX(), C.getVectorY() - intersectionPosition.getVectorY(), C.getVectorZ() - intersectionPosition.getVectorZ());
+		double areaPBC = (BP.crossProduct(CP)).dotProduct(normal);
+			
+		//Area PCA
+		//Use Vector CP from Area PBC
+		Vector AP ( A.getVectorX() - intersectionPosition.getVectorX(), A.getVectorY() - intersectionPosition.getVectorY(), A.getVectorZ() - intersectionPosition.getVectorZ());
+		double areaPCA = (CP.crossProduct(AP)).dotProduct(normal);
+		
+		double baryx = areaPBC / areaABC; // Alpha - corresponds to point A 
+		double baryy = areaPCA / areaABC; // Beta  - corresponds to point B
+		double baryz = 1.0f - baryx - baryy; // gamma - corresponds to point C
+		
+		//tex coordinate vector's for each point have X and Y corresponding to u , v text map coordinates.
+		//Interpolate those 2D tex coordinate values for each of the three points based on the barycentric coordinates of intersection point
+		double u = texCoorA.getVectorX()* baryx + texCoorB.getVectorX()*baryy + texCoorC.getVectorX() * baryz;
+		double v = texCoorA.getVectorY()* baryx + texCoorB.getVectorY()*baryy + texCoorC.getVectorY() * baryz;
+		
+		return Vector( u, v, 0.0);
+		
+    }
+    
+    //Based on 2D Vector return color at image coordinates
+    Color getTexColor(Vector texCoordinates ){
+		
+        //Get unsigned int coordinates based on 2D vector using image's width and height
+        unsigned int u = texCoordinates.getVectorX() * texMap.width();
+        unsigned int v = texCoordinates.getVectorY() * texMap.height();
+        
+        double r = texMap(u,v,0)/255;
+        double g = texMap(u,v,1)/255;
+        double b = texMap(u,v,2)/255;
+        
+        //std::cout << "r: " << r << " g: " << g << " b: " << b << std::endl;
+        
+        //Create color from that data
+        Color texColor = Color( r, g, b, 4.0);
+    
+    
+        //Return the color
+        return texColor;
+    }
 	
 	virtual double intersection(Ray ray) {
 		Vector rayDirection = ray.getRayDirection();
