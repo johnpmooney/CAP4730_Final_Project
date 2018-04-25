@@ -439,7 +439,7 @@ int main(int argc, char *argv[]) {
 	
 	
 	//Lighting
-	Vector lightPosition (-5,15,-7);
+	Vector lightPosition (0, 5,-4);
 	Light sceneLight ( lightPosition, whitLight);
 	std::vector<Source*> lightSources;
 	lightSources.push_back(dynamic_cast<Source*>(&sceneLight));
@@ -448,23 +448,29 @@ int main(int argc, char *argv[]) {
 	//Objects in the Scene
 	Vector s1 (1.25,0,0);
 	Vector s2 (-1,0,0);
+
 	Vector A1 (1,1,-2);
 	Vector B1 (3,-1,0);
 	Vector C1 (-3,-1,0);
 	Sphere sceneSphere (s1,1, blue);
 	Sphere sceneSphere1 (s2,1,clear);
 	Triangle sceneTriangle (B1, C1, A1, clear);
+
 	Plane scenePlane (Y, -1, tile);
 	Plane scenePlane1 (Z, 1, green);
 	
 	//texture mapping
-	CImg<double> colorMap("moon_surface_texture.bmp");
-    Sphere colorMapSphere( s2, 1, colorMap );
+	CImg<double> colorMap("color_nums.bmp");
+	//Create triangle with colormap, specifying 2D tex map coordinates of triangle;s vertices
+	Triangle sceneTriangle (A1, B1, C1, colorMap, Vector(0.0,1.0,0.0), Vector(1.0,1.0,0.0), Vector(0.0,0.0,0.0) );
+	Triangle sceneTriangle1(C1, B1, D1, colorMap, Vector(0.0,0.0,0.0), Vector(1.0,1.0,0.0), Vector(1.0,0.0,0.0) );       
 	
+
 	sceneObjects.push_back(dynamic_cast<Object*>(&sceneSphere));
 	sceneObjects.push_back(dynamic_cast<Object*>(&sceneSphere1));
 //	sceneObjects.push_back(dynamic_cast<Object*>(&colorMapSphere));
 //	sceneObjects.push_back(dynamic_cast<Object*>(&sceneTriangle));
+
 	sceneObjects.push_back(dynamic_cast<Object*>(&scenePlane));
 //	sceneObjects.push_back(dynamic_cast<Object*>(&scenePlane1));
 	
