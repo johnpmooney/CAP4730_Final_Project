@@ -5,6 +5,8 @@
 #include "Color.h"
 #include "math.h"
 #include "Object.h"
+#include <iostream>
+
 
 class Plane : public Object {
 	Vector normal;
